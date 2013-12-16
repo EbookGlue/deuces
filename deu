@@ -7,6 +7,9 @@ import sys, os, argparse, logging
 cluster_base = '/var/lib/postgresql/9.1/main'
 DEVNULL = open(os.devnull, 'w')
 
+def get_data_location(oid):
+    return '%s/base/%s' % (cluster_base, oid)
+
 def connect_to_db():
     base_postgres_url = os.environ.get('BASE_PG_URL')
     engine = sa.create_engine("%s/postgres" % base_postgres_url)
@@ -15,6 +18,13 @@ def connect_to_db():
     return conn
 
 def push_from(db_name):
+    conn = connect_to_db()
+    #conn.execute("create database %s;" % db_name)
+    result = conn.execute("select oid from pg_database where datname='%s';" % db_name)
+    oid = result.fetchone()[0]
+    conn.close()
+
+    data_location = get_data_location(oid)
 
     # Push database into cloud backup 
     logging.info("Pushing database into cloud backup...")
@@ -30,7 +40,7 @@ def clone_into(db_name):
     oid = result.fetchone()[0]
     conn.close()
 
-    data_location = '%s/base/%s' % (cluster_base, oid)
+    data_location = get_data_location(oid)
 
     pg_ctl = '/usr/lib/postgresql/9.1/bin/pg_ctl'
 
