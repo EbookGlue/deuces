@@ -4,6 +4,12 @@ import sqlalchemy as sa
 import subprocess
 import sys, os, argparse, logging
 
+def push_from(database_name):
+    print database_name
+
+def clone_into(database_name):
+    print database_name
+
 def main(args, loglevel):
     logging.basicConfig(format="%(levelname)s: %(message)s", level=loglevel)
 
@@ -41,26 +47,25 @@ def main(args, loglevel):
     start_p.wait()
 
     logging.info("Lastest backup has successfully been cloned into new database: %s" % db_name)
-    logging.info("You passed an argument.")
-    logging.debug("Your Argument: %s" % args.argument)
  
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description = "Clones a copy of a production database in cloud",)
+    parser = argparse.ArgumentParser(description = "Clones a copy of a production database backup locally",)
     parser.add_argument(
-                      "argument",
-                      help = "pass ARG to the program",
-                      metavar = "ARG")
+                      "-p",
+                      "--push",
+                      help = "pushes a copy of database to the cloud",
+                      metavar = "push old_database_name")
     parser.add_argument(
-                      "-v",
-                      "--verbose",
-                      help="increase output verbosity",
-                      action="store_true")
-    args = parser.parse_args()
-  
-    if args.verbose:
-        loglevel = logging.DEBUG
+                      "-c",
+                      "--clone",
+                      help = "clones cloud backup into local database",
+                      metavar = "clone new_database_name")
+    args = parser.parse_args(sys.argv[1:])
+
+    logging.basicConfig(format="%(levelname)s: %(message)s", level=logging.INFO)
+    if args.push:
+	push_from(args.push)
+    elif args.clone:
+        clone_into(args.clone)
     else:
-        loglevel = logging.INFO
-
-    main(args, loglevel)
-
+        print "Sorry, invalid arguments"
