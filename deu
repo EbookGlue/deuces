@@ -34,7 +34,7 @@ def push_from(db_name):
 
 def clone_into(db_name):
     conn = connect_to_db()
-    #conn.execute("create database %s;" % db_name)
+    conn.execute("create database %s;" % db_name)
     result = conn.execute("select oid from pg_database where datname='%s';" % db_name)
     oid = result.fetchone()[0]
     conn.close()
