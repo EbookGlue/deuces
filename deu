@@ -5,6 +5,7 @@ import subprocess
 import sys, os, argparse, logging
 
 cluster_base = '/var/lib/postgresql/9.1/main'
+wale_envdir = '/etc/wal-e.d/env'
 DEVNULL = open(os.devnull, 'w')
 
 def get_data_location(oid):
@@ -12,6 +13,11 @@ def get_data_location(oid):
 
 def connect_to_db():
     base_postgres_url = os.environ.get('BASE_PG_URL')
+    if base_postgres_url is None:
+	env_var_file = open('%s/BASE_PG_URL' % wale_envdir, 'r')
+	base_postgres_url = env_var_file.read().strip()
+	env_var_file.close()
+
     engine = sa.create_engine("%s/postgres" % base_postgres_url)
     conn = engine.connect()
     conn.execute("commit")
@@ -27,7 +33,7 @@ def push_from(db_name):
 
     # Push database into cloud backup 
     logging.info("Pushing database into cloud backup...")
-    push_p = subprocess.Popen(['envdir', '/etc/wal-e.d/env', 'wal-e', 'backup-push', data_location], stdout=DEVNULL, stderr=subprocess.STDOUT)
+    push_p = subprocess.Popen(['envdir', wale_envdir, 'wal-e', 'backup-push', data_location], stdout=DEVNULL, stderr=subprocess.STDOUT)
     push_p.wait()
 
     logging.info("The database '%s' has successfully pushed to a cloud backup." % db_name)
@@ -50,7 +56,7 @@ def clone_into(db_name):
 
     # Clone backup into new database
     logging.info("Cloning backup from cloud...")
-    clone_p = subprocess.Popen(['envdir', '/etc/wal-e.d/env', 'wal-e', 'backup-fetch', data_location, 'LATEST'], stdout=DEVNULL, stderr=subprocess.STDOUT)
+    clone_p = subprocess.Popen(['envdir', wale_envdir, 'wal-e', 'backup-fetch', data_location, 'LATEST'], stdout=DEVNULL, stderr=subprocess.STDOUT)
     clone_p.wait()
 
     # Start postgres server
